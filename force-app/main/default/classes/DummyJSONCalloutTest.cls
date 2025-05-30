@@ -135,8 +135,8 @@ public with sharing class DummyJSONCalloutTest {
 	static void testContactInsert() {
 		//Create 100 contact
 		List<Contact> contacts = new List<Contact>();
-		for (Integer i = 0; i < 1; i++) {
-			contacts.add(new Contact(FirstName = 'Test', LastName = 'User' + i));
+		for (Integer i = 0; i < 100; i++) {
+			contacts.add(new Contact(FirstName = 'Test', LastName = 'User' + i, DummyJSON_Id__c = String.valueOf(i)));
 		}
 
 		// Register the mock callout class
@@ -144,15 +144,17 @@ public with sharing class DummyJSONCalloutTest {
 
 		// As this is a future method, we need to enclose it in Test.startTest() and Test.stopTest() to ensure it's executed in the test context.
 		Test.startTest();
-		Database.DMLOptions dml = new Database.DMLOptions();
-		dml.DuplicateRuleHeader.allowSave = true;
-		dml.DuplicateRuleHeader.runAsCurrentUser = true;
-		Database.SaveResult[] sr = Database.insert(contacts, dml);
+			Database.DMLOptions dml = new Database.DMLOptions();
+			dml.DuplicateRuleHeader.allowSave = true;
+			dml.DuplicateRuleHeader.runAsCurrentUser = true;
+			Database.SaveResult[] sr = Database.insert(contacts, dml);
 		Test.stopTest();
 
 		// After the stopTest, the future method will have run. Now we can check if the contact was created correctly.
 		contacts = [
 			SELECT
+				Id,
+				LastName,
 				DummyJSON_Id__c,
 				Email,
 				Phone,
@@ -168,6 +170,7 @@ public with sharing class DummyJSONCalloutTest {
 		Assert.isTrue(!contacts.isEmpty(), 'No contacts were created');
 
 		for (Contact cont : contacts) {
+			System.debug(JSON.serializePretty(cont));
 			Assert.isTrue(cont.DummyJSON_Id__c.isNumeric(), 'DummyJSON_Id is not numeric string');
 			Integer dummyJSONId = Integer.valueOf(cont.DummyJSON_Id__c);
 			Assert.isTrue(dummyJSONId >= 0 && dummyJSONId <= 100, 'Expected range of DummyJSON_Id is [0-100]');
